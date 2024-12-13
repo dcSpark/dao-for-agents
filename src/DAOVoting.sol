@@ -108,21 +108,25 @@ contract DAOVoting {
         str[0] = "0";
         str[1] = "x";
         for (uint256 i = 0; i < 20; i++) {
-            str[2+i*2] = alphabet[uint8(value[i + 12] >> 4)];
-            str[3+i*2] = alphabet[uint8(value[i + 12] & 0x0f)];
+            str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
+            str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
         }
         return string(str);
     }
 
     // View functions
-    function getProposal(uint256 _proposalId) external view returns (
-        string memory text,
-        uint256 yesVotes,
-        uint256 noVotes,
-        bool executed,
-        bool isMembershipProposal,
-        address proposedMember
-    ) {
+    function getProposal(uint256 _proposalId)
+        external
+        view
+        returns (
+            string memory text,
+            uint256 yesVotes,
+            uint256 noVotes,
+            bool executed,
+            bool isMembershipProposal,
+            address proposedMember
+        )
+    {
         require(_proposalId < proposals.length, "Invalid proposal");
         Proposal storage proposal = proposals[_proposalId];
         return (

@@ -49,7 +49,7 @@ contract DAOVotingTest is Test {
         dao.vote(proposalId, true);
 
         // Check proposal was executed
-        (,,,bool executed,,) = dao.getProposal(proposalId);
+        (,,, bool executed,,) = dao.getProposal(proposalId);
         assertTrue(executed);
     }
 

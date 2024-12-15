@@ -14,7 +14,7 @@ contract DAOVotingTest is Test {
         deployer = address(this);
         member1 = makeAddr("member1");
         member2 = makeAddr("member2");
-        dao = new DAOVoting();
+        dao = new DAOVoting(new address[](0));
     }
 
     function test_DeployerIsMember() public {
@@ -142,5 +142,36 @@ contract DAOVotingTest is Test {
         dao.vote(proposal3, true);
         assertTrue(dao.isMember(newMembers[2]));
         assertEq(dao.memberCount(), 4);
+    }
+
+    function test_DeployWithInitialMembers() public {
+        address[] memory initialMembers = new address[](2);
+        initialMembers[0] = member1;
+        initialMembers[1] = member2;
+
+        DAOVoting newDao = new DAOVoting(initialMembers);
+
+        // Check deployer is member
+        assertTrue(newDao.isMember(address(this)));
+
+        // Check initial members were added
+        assertTrue(newDao.isMember(member1));
+        assertTrue(newDao.isMember(member2));
+        assertEq(newDao.memberCount(), 3); // deployer + 2 initial members
+    }
+
+    function testFail_DeployWithDuplicateMembers() public {
+        address[] memory initialMembers = new address[](2);
+        initialMembers[0] = member1;
+        initialMembers[1] = member1; // Duplicate
+
+        new DAOVoting(initialMembers); // Should fail
+    }
+
+    function testFail_DeployWithZeroAddress() public {
+        address[] memory initialMembers = new address[](1);
+        initialMembers[0] = address(0);
+
+        new DAOVoting(initialMembers); // Should fail
     }
 }

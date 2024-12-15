@@ -26,10 +26,20 @@ contract DAOVoting {
     event MemberAdded(address indexed member);
     event MemberRemoved(address indexed member);
 
-    constructor() {
+    constructor(address[] memory _initialMembers) {
         // Add contract deployer as the first member
         members[msg.sender] = true;
         memberCount = 1;
+
+        // Add initial members if provided
+        for (uint256 i = 0; i < _initialMembers.length; i++) {
+            address member = _initialMembers[i];
+            require(member != address(0), "Invalid member address");
+            require(!members[member], "Duplicate member");
+            members[member] = true;
+            memberCount++;
+            emit MemberAdded(member);
+        }
     }
 
     modifier onlyMember() {

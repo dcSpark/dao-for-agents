@@ -92,4 +92,26 @@ contract DAOVotingTest is Test {
         // Try to add member1 again
         dao.submitMembershipProposal(member1);
     }
+
+    function test_IntegrationProposalWorkflow() public {
+        // Create a new proposal
+        string memory proposalText = "Integration Test Proposal";
+        uint256 proposalId = dao.submitProposal(proposalText);
+
+        // Verify proposal was created correctly
+        (string memory text, uint256 yesVotes, uint256 noVotes, bool executed,,) = dao.getProposal(proposalId);
+        assertEq(text, proposalText);
+        assertEq(yesVotes, 0);
+        assertEq(noVotes, 0);
+        assertFalse(executed);
+
+        // Vote on the proposal (deployer is the only member)
+        dao.vote(proposalId, true);
+
+        // Verify vote was counted and proposal was executed
+        (, yesVotes, noVotes, executed,,) = dao.getProposal(proposalId);
+        assertEq(yesVotes, 1);
+        assertEq(noVotes, 0);
+        assertTrue(executed);
+    }
 }

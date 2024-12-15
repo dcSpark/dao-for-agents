@@ -60,7 +60,7 @@ contract DAOVotingScript is Script {
     function substring(string memory str, uint256 startIndex, uint256 length) internal pure returns (string memory) {
         bytes memory strBytes = bytes(str);
         bytes memory result = new bytes(length);
-        for(uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             result[i] = strBytes[startIndex + i];
         }
         return string(result);

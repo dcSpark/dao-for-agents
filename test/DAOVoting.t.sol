@@ -114,4 +114,33 @@ contract DAOVotingTest is Test {
         assertEq(noVotes, 0);
         assertTrue(executed);
     }
+
+    function test_AddMultipleMembersWithSimpleMajority() public {
+        address[] memory newMembers = new address[](3);
+        newMembers[0] = makeAddr("member1");
+        newMembers[1] = makeAddr("member2");
+        newMembers[2] = makeAddr("member3");
+
+        // Add first member (only deployer votes)
+        uint256 proposal1 = dao.submitMembershipProposal(newMembers[0]);
+        dao.vote(proposal1, true);
+        assertTrue(dao.isMember(newMembers[0]));
+        assertEq(dao.memberCount(), 2);
+
+        // Add second member (deployer and member1 can vote)
+        uint256 proposal2 = dao.submitMembershipProposal(newMembers[1]);
+        dao.vote(proposal2, true);
+        vm.prank(newMembers[0]);
+        dao.vote(proposal2, true);
+        assertTrue(dao.isMember(newMembers[1]));
+        assertEq(dao.memberCount(), 3);
+
+        // Add third member (need 2 out of 3 votes)
+        uint256 proposal3 = dao.submitMembershipProposal(newMembers[2]);
+        dao.vote(proposal3, true);
+        vm.prank(newMembers[0]);
+        dao.vote(proposal3, true);
+        assertTrue(dao.isMember(newMembers[2]));
+        assertEq(dao.memberCount(), 4);
+    }
 }

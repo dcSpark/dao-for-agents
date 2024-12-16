@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Generated files
+src/abi/*.json
+
+# IDE and editor files
+.DS_Store
+*.log

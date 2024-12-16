@@ -1,10 +1,5 @@
 import { ethers } from 'ethers';
-
-// ABI fragment for the view functions we need
-const DAO_ABI = [
-  "function getProposalCount() external view returns (uint256)",
-  "function getProposal(uint256 _proposalId) external view returns (string memory text, uint256 yesVotes, uint256 noVotes, bool executed, bool isMembershipProposal, address proposedMember)"
-];
+import DAO_ABI from './abi/dao-voting.json';
 
 export interface Proposal {
   text: string;

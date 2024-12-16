@@ -163,9 +163,7 @@ contract DAOVoting {
     // Helper function to check for existing membership proposals
     function hasExistingMembershipProposal(address _member) internal view returns (bool) {
         for (uint256 i = 0; i < proposals.length; i++) {
-            if (proposals[i].isMembershipProposal &&
-                proposals[i].proposedMember == _member &&
-                !proposals[i].executed) {
+            if (proposals[i].isMembershipProposal && proposals[i].proposedMember == _member && !proposals[i].executed) {
                 return true;
             }
         }

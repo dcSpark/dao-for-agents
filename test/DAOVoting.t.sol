@@ -9,17 +9,21 @@ contract DAOVotingTest is Test {
     address public deployer;
     address public member1;
     address public member2;
+    address public initialMember; // Store initial member address
 
     function setUp() public {
         deployer = address(this);
         member1 = makeAddr("member1");
         member2 = makeAddr("member2");
-        dao = new DAOVoting(new address[](0));
+        initialMember = makeAddr("initial_member");
+        address[] memory initialMembers = new address[](1);
+        initialMembers[0] = initialMember;
+        dao = new DAOVoting(initialMembers);
     }
 
     function test_DeployerIsMember() public {
         assertTrue(dao.isMember(deployer));
-        assertEq(dao.memberCount(), 1);
+        assertEq(dao.memberCount(), 2);
     }
 
     function test_SubmitProposal() public {
@@ -45,7 +49,9 @@ contract DAOVotingTest is Test {
         string memory proposalText = "Test Proposal";
         uint256 proposalId = dao.submitProposal(proposalText);
 
-        // Vote yes (only deployer is member, so this is majority)
+        // Vote yes (need both deployer and initial member for majority)
+        dao.vote(proposalId, true);
+        vm.prank(initialMember);
         dao.vote(proposalId, true);
 
         // Check proposal was executed
@@ -57,23 +63,25 @@ contract DAOVotingTest is Test {
         // Submit membership proposal
         uint256 proposalId = dao.submitMembershipProposal(member1);
 
-        // Vote yes (only deployer is member, so this is majority)
+        // Vote yes (need both deployer and initial member for majority)
+        dao.vote(proposalId, true);
+        vm.prank(initialMember);
         dao.vote(proposalId, true);
 
         // Check member was added
         assertTrue(dao.isMember(member1));
-        assertEq(dao.memberCount(), 2);
+        assertEq(dao.memberCount(), 3);
     }
 
     function testFail_NonMemberCannotSubmitProposal() public {
-        vm.prank(member1);
+        vm.prank(member2); // Use a non-member address
         dao.submitProposal("Should Fail");
     }
 
     function testFail_NonMemberCannotVote() public {
         uint256 proposalId = dao.submitProposal("Test Proposal");
 
-        vm.prank(member1);
+        vm.prank(member2); // Use a non-member address
         dao.vote(proposalId, true);
     }
 
@@ -105,43 +113,49 @@ contract DAOVotingTest is Test {
         assertEq(noVotes, 0);
         assertFalse(executed);
 
-        // Vote on the proposal (deployer is the only member)
+        // Vote on the proposal (need both deployer and initial member for majority)
+        dao.vote(proposalId, true);
+        vm.prank(initialMember);
         dao.vote(proposalId, true);
 
         // Verify vote was counted and proposal was executed
         (, yesVotes, noVotes, executed,,) = dao.getProposal(proposalId);
-        assertEq(yesVotes, 1);
+        assertEq(yesVotes, 2);
         assertEq(noVotes, 0);
         assertTrue(executed);
     }
 
     function test_AddMultipleMembersWithSimpleMajority() public {
         address[] memory newMembers = new address[](3);
-        newMembers[0] = makeAddr("member1");
-        newMembers[1] = makeAddr("member2");
+        newMembers[0] = member1;
+        newMembers[1] = member2;
         newMembers[2] = makeAddr("member3");
 
-        // Add first member (only deployer votes)
+        // Add first member (need both deployer and initial member for majority)
         uint256 proposal1 = dao.submitMembershipProposal(newMembers[0]);
         dao.vote(proposal1, true);
+        vm.prank(initialMember);
+        dao.vote(proposal1, true);
         assertTrue(dao.isMember(newMembers[0]));
-        assertEq(dao.memberCount(), 2);
-
-        // Add second member (deployer and member1 can vote)
-        uint256 proposal2 = dao.submitMembershipProposal(newMembers[1]);
-        dao.vote(proposal2, true);
-        vm.prank(newMembers[0]);
-        dao.vote(proposal2, true);
-        assertTrue(dao.isMember(newMembers[1]));
         assertEq(dao.memberCount(), 3);
 
-        // Add third member (need 2 out of 3 votes)
+        // Add second member (need 2 out of 3 votes)
+        uint256 proposal2 = dao.submitMembershipProposal(newMembers[1]);
+        dao.vote(proposal2, true);
+        vm.prank(initialMember);
+        dao.vote(proposal2, true);
+        assertTrue(dao.isMember(newMembers[1]));
+        assertEq(dao.memberCount(), 4);
+
+        // Add third member (need 3 out of 4 votes)
         uint256 proposal3 = dao.submitMembershipProposal(newMembers[2]);
+        dao.vote(proposal3, true);
+        vm.prank(initialMember);
         dao.vote(proposal3, true);
         vm.prank(newMembers[0]);
         dao.vote(proposal3, true);
         assertTrue(dao.isMember(newMembers[2]));
-        assertEq(dao.memberCount(), 4);
+        assertEq(dao.memberCount(), 5);
     }
 
     function test_DeployWithInitialMembers() public {
@@ -173,5 +187,10 @@ contract DAOVotingTest is Test {
         initialMembers[0] = address(0);
 
         new DAOVoting(initialMembers); // Should fail
+    }
+
+    function testFail_DeployWithNoMembers() public {
+        address[] memory initialMembers = new address[](0);
+        new DAOVoting(initialMembers); // Should fail when no members are specified
     }
 }

@@ -27,6 +27,8 @@ contract DAOVoting {
     event MemberRemoved(address indexed member);
 
     constructor(address[] memory _initialMembers) {
+        require(_initialMembers.length > 0, "Initial members required");
+
         // Add contract deployer as the first member
         members[msg.sender] = true;
         memberCount = 1;
@@ -61,6 +63,7 @@ contract DAOVoting {
     function submitMembershipProposal(address _proposedMember) external onlyMember returns (uint256) {
         require(_proposedMember != address(0), "Invalid address");
         require(!members[_proposedMember], "Already a member");
+        require(!hasExistingMembershipProposal(_proposedMember), "Existing proposal for member");
 
         uint256 proposalId = proposals.length;
         Proposal storage newProposal = proposals.push();
@@ -155,5 +158,17 @@ contract DAOVoting {
 
     function getProposalCount() external view returns (uint256) {
         return proposals.length;
+    }
+
+    // Helper function to check for existing membership proposals
+    function hasExistingMembershipProposal(address _member) internal view returns (bool) {
+        for (uint256 i = 0; i < proposals.length; i++) {
+            if (proposals[i].isMembershipProposal &&
+                proposals[i].proposedMember == _member &&
+                !proposals[i].executed) {
+                return true;
+            }
+        }
+        return false;
     }
 }
